@@ -33,7 +33,6 @@
     --font-monospace: "Maple Mono NF CN", "JetBrains Mono", "Consolas", "Menlo", monospace;
 
     /* ------ 2. Font Size - 字号 (基准 px, 比例 rem) ------ */
-    --font-size-base:                                     16px;  /* 基础字号仅供参考 */
 
     --font-size-h1:                                    1.75rem;  /* 28px */
     --font-size-h2:                                   1.625rem;  /* 26px */
@@ -45,7 +44,7 @@
     --font-size-code:                                  0.95rem;  /* 代码块字号稍小 */
     --font-size-inline-code:                           0.92rem;
     --font-weight-bold:                                    700;
-    --font-weight-medium:                                  600;
+    --font-weight-medium:                                  500;
 
     /* ------ 3. Line Height - 行高 (统一使用无单位比例) ------ */
     --font-line-height-base:                               1.8;  /* 正文行高 */
@@ -72,6 +71,7 @@
     --spacing-heading-bar-right:                          12px;  /* 装饰线距离 */
     --spacing-table-cell:                              6px 6px;  /* 表格单元格上下/左右间距 */
     --spacing-hr-vertical:                                2rem;  /* 分割线垂直间距 */
+    --spacing-write-first-list-top:                     1.5rem;  /* 文档首个列表的上方间距 */
 
     /* ------ 6. Component - 组件规格 (统一使用 px) ------ */
     --component-border-radius:                             8px;  /* 组件圆角半径 */
@@ -198,7 +198,7 @@
 @font-face {
     font-family: "HarmonyOS Sans SC";
     font-style: normal;
-    font-weight: 600;
+    font-weight: 700;
     src:
         local("HarmonyOS Sans SC Bold"),
         local("HarmonyOS_Sans_SC_Bold"),
@@ -270,7 +270,6 @@ body {
     line-height: var(--font-line-height-base);
     letter-spacing: 0;
     margin: 0;
-    overflow-x: auto;
 }
 
 #write {
@@ -310,13 +309,18 @@ a {
 
 /* ======== 4. 标题样式 (Heading Styles) ======== */
 
+/* 界面通用部分保留全局 */
 h1, h2, h3, h4, h5, h6 {
     position: relative;
+    font-weight: bold;
+    cursor: text;
+}
+/* 排版相关限定 */
+#write h1, #write h2, #write h3,
+#write h4, #write h5, #write h6 {
     margin-top: var(--spacing-heading-top);
     margin-bottom: var(--spacing-heading-bottom);
-    font-weight: bold;
     line-height: 1.4;
-    cursor: text;
 }
 
 /* H1: 居中对齐，无左侧竖线装饰 */
@@ -329,26 +333,40 @@ h1 {
     padding-bottom: var(--spacing-h1-padding-bottom);
 }
 
-/* H2-H6: 采用 Flex 布局以实现左侧竖线的高度自适应 */
-#write h2, #write h3, #write h4, #write h5, #write h6 {
-    display: flex !important;
-    align-items: stretch !important; /* 确保竖线拉伸充满行高 */
-    padding-left: 0 !important;
-    background: transparent !important; /* 消除背景包边 */
-    outline: none !important;           /* 消除聚焦框 */
+/* H2-H6 标题基础 */
+#write h2,
+#write h3,
+#write h4,
+#write h5,
+#write h6 {
+    position: relative;
+    padding-left: calc(
+        var(--component-heading-bar-width) +
+        var(--spacing-heading-bar-right)
+    ) !important;
+
+    background: transparent !important;
+    outline: none !important;
     box-shadow: none !important;
 }
 
-/* 左侧竖线装饰：基础设置 */
-#write h2::before, #write h3::before, #write h4::before, 
-#write h5::before, #write h6::before {
+/* 左侧竖线 */
+/* 左侧竖线 */
+#write h2::before,
+#write h3::before,
+#write h4::before,
+#write h5::before,
+#write h6::before {
     content: "";
-    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
     width: var(--component-heading-bar-width);
-    margin-right: var(--spacing-heading-bar-right);
-    border-radius: 0 !important; /* 直角边框 */
-    flex-shrink: 0; /* 禁止竖线被压缩 */
+    border-radius: 0;
 }
+
 
 /* 装饰线颜色映射 */
 #write h2::before { background: var(--heading-h2-bar-color) !important; }
@@ -358,13 +376,19 @@ h1 {
 #write h6::before { background: var(--heading-h6-bar-color) !important; }
 
 /* 标题字体与字号设置 */
-h2 { font-size: var(--font-size-h2); line-height: var(--font-line-height-h2); font-weight: var(--font-weight-bold); }
-h3 { font-size: var(--font-size-h3); line-height: var(--font-line-height-h3); font-weight: var(--font-weight-bold); }
-h4 { font-size: var(--font-size-h4); line-height: var(--font-line-height-h4); font-weight: var(--font-weight-medium); }
-h5 { font-size: var(--font-size-h5); line-height: var(--font-line-height-h5); font-weight: var(--font-weight-medium); }
-h6 { font-size: var(--font-size-h6); line-height: var(--font-line-height-h6); font-weight: var(--font-weight-medium); }
+#write h2 { font-size: var(--font-size-h2); line-height: var(--font-line-height-h2); font-weight: var(--font-weight-bold); }
+#write h3 { font-size: var(--font-size-h3); line-height: var(--font-line-height-h3); font-weight: var(--font-weight-bold); }
+#write h4 { font-size: var(--font-size-h4); line-height: var(--font-line-height-h4); font-weight: var(--font-weight-medium); }
+#write h5 { font-size: var(--font-size-h5); line-height: var(--font-line-height-h5); font-weight: var(--font-weight-medium); }
+#write h6 { font-size: var(--font-size-h6); line-height: var(--font-line-height-h6); font-weight: var(--font-weight-medium); }
 
 /* 解决 Typora 编辑时聚焦状态导致竖线丢失或错位的问题 */
+#write :is(h2, h3, h4, h5, h6).md-focus {
+    display: flex !important;
+    align-items: stretch !important;
+    padding-left: 0 !important;
+}
+
 #write :is(h2, h3, h4, h5, h6).md-focus::before {
     content: "" !important;
     display: block !important;
@@ -382,15 +406,6 @@ h6 { font-size: var(--font-size-h6); line-height: var(--font-line-height-h6); fo
     top: auto !important;
     border: none !important;
 }
-
-/* 修复编辑时文字内容包裹导致的 Flex 布局错位 */
-#write :is(h2, h3, h4, h5, h6) > span,
-#write :is(h2, h3, h4, h5, h6).md-focus > span {
-    display: block !important;
-    width: 100% !important;
-    flex: 1 !important;
-}
-
 
 /* ======== 5. 区块与组件 (Blocks & Components) ======== */
 
@@ -424,12 +439,13 @@ blockquote {
 }
 
 /* 文档首尾间距清理 */
-#write > ul:first-child, #write > ol:first-child { margin-top: 30px; }
-body > *:first-child { margin-top: 0 !important; }
-body > *:last-child { margin-bottom: 0 !important; }
-body > h2:first-child, body > h1:first-child, body > h1:first-child + h2 { margin-top: 0; padding-top: 0; }
+#write > ul:first-child, #write > ol:first-child { margin-top: var(--spacing-write-first-list-top); }
+#write > *:first-child { margin-top: 0 !important; }
+#write > *:last-child  { margin-bottom: 0 !important; }
+#write > h1:first-child,
+#write > h2:first-child { margin-top: 0; padding-top: 0; }
 ul, ol { padding-left: var(--layout-list-indent); }
-li > ol, li > ul { margin: 0 0; }
+li > ol, li > ul { margin: 0; }
 
 
 /* ======== 6. 表格样式 (Tables) ======== */
@@ -464,10 +480,6 @@ table thead th {
 /* 斑马纹 (偶数行背景) */
 table tr:nth-child(even) {
     background-color: var(--table-striped-background-color);
-}
-
-table tbody tr:last-child td {
-    border-bottom: 1px solid var(--border-primary-color);
 }
 
 .ty-table-edit {
@@ -567,7 +579,7 @@ ul ul ul .md-list-item::marker {
     border: 0.1em solid var(--theme-light-color);
     background-color: var(--paper-background-color);
     box-sizing: border-box;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
 
 /* 选中状态：背景填充 */
@@ -586,19 +598,18 @@ ul ul ul .md-list-item::marker {
     border: 0.12em solid #fff;
     border-top: 0;
     border-left: 0;
-    top: 42%; 
+    top: 50%;          /* 居中 */
     left: 50%;
     
-    transform: translate(-50%, -50%) rotate(45deg) scale(0);
+    transform: translate(-50%, -60%) rotate(45deg) scale(0); /* -60% 补偿对勾视觉重心偏下 */
     transform-origin: center;
     opacity: 0;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
 }
 
-/* 选中状态：显示对勾 */
 .md-task-list-item > input:checked::after {
     opacity: 1;
-    transform: translate(-50%, -55%) rotate(45deg) scale(1);
+    transform: translate(-50%, -60%) rotate(45deg) scale(1);  /* 与未勾选保持一致 */
 }
 
 /* 已完成任务样式 */
@@ -710,7 +721,6 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
     font-size: var(--font-size-code);
     padding: 0.8rem !important;
     border-radius: var(--component-border-radius);
-    overflow: visible !important;
     background-color: var(--code-background-color) !important;
     color: var(--code-foreground-color);
     line-height: var(--font-line-height-code);
@@ -720,14 +730,13 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
     /* 容器装饰：极细边框与柔和阴影 */
     border: 1px solid rgba(0,0,0,0.1);
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* 专注模式下的非活跃代码块淡化 */
-.on-focus-mode .CodeMirror.cm-s-inner:not(.CodeMirror-focused) *,
-.on-focus-mode .md-fences.md-focus .CodeMirror-code > :not(.CodeMirror-activeline) *,
-.on-focus-mode .md-htmlblock.md-focus .CodeMirror-code > :not(.CodeMirror-activeline) * {
-    color: var(--text-faded-color) !important
+.on-focus-mode .CodeMirror.cm-s-inner:not(.CodeMirror-focused) .CodeMirror-code,
+.on-focus-mode .md-fences.md-focus .CodeMirror-code > :not(.CodeMirror-activeline),
+.on-focus-mode .md-htmlblock.md-focus .CodeMirror-code > :not(.CodeMirror-activeline) {
+    opacity: 0.5 !important;
 }
 
 /* 行内代码 */
@@ -774,7 +783,7 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
 .cm-s-inner span.cm-keyword { color: var(--code-syntax-keyword-color); }
 .cm-s-inner span.cm-def { color: var(--code-syntax-definition-color); }
 .cm-s-inner span.cm-variable { color: var(--code-syntax-variable-color); }
-.cm-s-inner span.cm-variable-2 { color: var(--code-syntax-variable-color); }
+.cm-s-inner span.cm-variable-2 { color: var(--code-syntax-variable2-color); }
 .cm-s-inner span.cm-variable-3 { color: var(--code-syntax-variable2-color); }
 .cm-s-inner span.cm-type { color: var(--code-syntax-type-color); }
 .cm-s-inner span.cm-property { color: var(--code-syntax-variable-color); }
@@ -814,6 +823,8 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
 }
 .cm-s-inner .CodeMirror-linenumber {
     color: var(--code-linenumber-color);
+    min-width: 2.5em;   /* 保证 3 位行号有足够宽度 */
+    padding-right: 8px; /* 行号与代码之间留出间距 */
 }
 .cm-s-inner div.CodeMirror-cursor {
     border-left: 1px solid var(--code-cursor-color);
@@ -885,13 +896,15 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
 
     /* 将竖线样式应用到 span 上，使用 box-decoration-break 保持跨页连续性 */
     #write h2 > span, #write h3 > span, #write h4 > span, 
-    #write h5 > span, #write h6 > span, #write .md-focus > span {
+    #write h5 > span, #write h6 > span,
+    #write :is(h2, h3, h4, h5, h6).md-focus > span {
         display: block !important;
-        border-left: var(--component-heading-bar-width) solid !important;
+        border-left-width: var(--component-heading-bar-width) !important;  /* 宽度 */
+        border-left-style: solid !important;                                /* 样式 */
+        /* 颜色由下方各自规则单独设定，互不干扰 */
         padding-left: var(--spacing-heading-bar-right) !important;
         box-sizing: border-box !important;
         page-break-inside: avoid;
-        
         -webkit-box-decoration-break: clone;
         box-decoration-break: clone;
     }
@@ -921,6 +934,7 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
         border: none !important;
         background-clip: border-box !important;
         background-color: var(--code-background-color) !important;
+        overflow: hidden !important;
     }
 
     /* 修复行号栏跨页出现的缝隙 */
@@ -928,7 +942,16 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
         border-right: 1px solid var(--code-background-color) !important;
         background-color: var(--code-background-color) !important;
     }
-
+    
+    /* 防止图片容器被分页截断 */
+    /* 取消图片阴影 */
+    #write .md-image {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    #write img {
+        box-shadow: none !important;
+    }
     #write .md-image img {
         box-shadow: none !important;
         border: 1px solid var(--border-primary-color);
