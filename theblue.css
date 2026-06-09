@@ -324,7 +324,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* H1: 居中对齐，无左侧竖线装饰 */
-h1 {
+#write h1 {
     text-align: center;
     padding-left: 0;
     font-size: var(--font-size-h1);
@@ -350,7 +350,6 @@ h1 {
     box-shadow: none !important;
 }
 
-/* 左侧竖线 */
 /* 左侧竖线 */
 #write h2::before,
 #write h3::before,
@@ -439,11 +438,13 @@ blockquote {
 }
 
 /* 文档首尾间距清理 */
-#write > ul:first-child, #write > ol:first-child { margin-top: var(--spacing-write-first-list-top); }
 #write > *:first-child { margin-top: 0 !important; }
 #write > *:last-child  { margin-bottom: 0 !important; }
-#write > h1:first-child,
-#write > h2:first-child { margin-top: 0; padding-top: 0; }
+/* 列表例外：允许首个列表有上边距 */
+#write > ul:first-child,
+#write > ol:first-child {
+    margin-top: var(--spacing-write-first-list-top) !important;
+}
 ul, ol { padding-left: var(--layout-list-indent); }
 li > ol, li > ul { margin: 0; }
 
@@ -554,14 +555,12 @@ ul ul ul .md-list-item::marker {
     position: absolute;
     left: 0; 
     top: 0.35em; /* 确保多行文本时首行对齐 */
-    
     width: 1.1em !important;
     height: 1.1em !important;
     margin: 0 !important;
     cursor: pointer;
     z-index: 2;
-    
-    /* 强制复选框始终不透明，避免被完成状态的透明度影响 */
+    padding: 0 !important;
     opacity: 1 !important; 
 }
 
@@ -740,7 +739,7 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
 }
 
 /* 行内代码 */
-#write code, tt {
+#write code, #write tt {
     padding: 2px 4px;
     border-radius: 2px;
     font-family: var(--font-monospace);
@@ -880,7 +879,6 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
     #write h2, #write h3, #write h4, #write h5, #write h6 {
         display: block !important;
         position: relative !important;
-        border-left: none !important;
         padding-left: 0 !important;
         margin-top: 1.5rem !important;
         margin-bottom: 1rem !important;
@@ -895,25 +893,25 @@ header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-
     }
 
     /* 将竖线样式应用到 span 上，使用 box-decoration-break 保持跨页连续性 */
-    #write h2 > span, #write h3 > span, #write h4 > span, 
-    #write h5 > span, #write h6 > span,
-    #write :is(h2, h3, h4, h5, h6).md-focus > span {
+    #write h2, #write h3, #write h4, #write h5, #write h6 {
         display: block !important;
-        border-left-width: var(--component-heading-bar-width) !important;  /* 宽度 */
-        border-left-style: solid !important;                                /* 样式 */
-        /* 颜色由下方各自规则单独设定，互不干扰 */
-        padding-left: var(--spacing-heading-bar-right) !important;
-        box-sizing: border-box !important;
-        page-break-inside: avoid;
+        position: relative !important;
+        padding-left: calc(var(--component-heading-bar-width) + var(--spacing-heading-bar-right)) !important;
+        border-left: var(--component-heading-bar-width) solid transparent !important; /* 占位 */
+        margin-top: 1.5rem !important;
+        margin-bottom: 1rem !important;
+        page-break-after: avoid;
         -webkit-box-decoration-break: clone;
         box-decoration-break: clone;
     }
 
-    #write h2 > span { border-left-color: var(--heading-h2-bar-color) !important; }
-    #write h3 > span { border-left-color: var(--heading-h3-bar-color) !important; }
-    #write h4 > span { border-left-color: var(--heading-h4-bar-color) !important; }
-    #write h5 > span { border-left-color: var(--heading-h5-bar-color) !important; }
-    #write h6 > span { border-left-color: var(--heading-h6-bar-color) !important; }
+    /* 为各个标题单独设置边框颜色 */
+    #write h2 { border-left-color: var(--heading-h2-bar-color) !important; }
+    #write h3 { border-left-color: var(--heading-h3-bar-color) !important; }
+    #write h4 { border-left-color: var(--heading-h4-bar-color) !important; }
+    #write h5 { border-left-color: var(--heading-h5-bar-color) !important; }
+    #write h6 { border-left-color: var(--heading-h6-bar-color) !important; }
+
 
     /* 代码块打印优化 */
     .md-fences,
