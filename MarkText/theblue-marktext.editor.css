@@ -1,0 +1,823 @@
+/*  ================================ TheBlue ================================  */
+/*  =================== MarkText 精简定制版 (适配 Cadmium 浅色) ===================  */
+/*  ================================================================
+    原作者：Github@CMOS4000 知乎@太极
+    定制策略：基于 MarkText 官方默认 Light (Cadmium 浅色) 主题定制
+    
+    【精准定制模块清单】：
+    1. 字体与行距：正文采用鸿蒙黑体 (HarmonyOS Sans SC)，代码采用 Maple Mono，行距 1.8；
+    2. 标题排版：H1 居中，H2~H6 呈现 TheBlue 标志性彩色装饰竖线；
+    3. 行内代码与高亮：浅蓝底色搭配主题蓝文字 (#007aff)，高亮标签 (<mark>) 柔和美化，与代码混叠时无缝融合消除毛刺；
+    4. 超链接：TheBlue 专属优雅紫罗兰色 (#6f42c1) 搭配平滑下划线，悬停呈现核心亮蓝 (#007aff)；
+    5. 引用块 (Blockquote)：TheBlue 标志性 4px 主题蓝竖线边框与 8% 浅蓝底色，内部行内代码采用纯白微胶囊反差排版；
+    6. 列表与任务列表：正文列表项目符号采用主题蓝点缀，任务列表勾选呈现 TheBlue 核心蓝 (#007aff)，行距 1.8；
+    7. 选中文本高亮：正文选中文本呈现经典纯蓝底色 (#0078d7) 与纯白文字反白 (#ffffff)；
+    8. 快捷编辑浮窗保护：严格隔离与保护原生浮动快捷格式弹窗（保持原版白底卡片效果）；
+    9. 图片样式：居中显示、圆角 8px 与柔和浅阴影；
+    10. 独立代码块：框架完全保留原版样式，仅修改深色背景 (#2b2b2b)、代码等宽字体、IntelliJ 语法高亮，
+       以及高对比度反白选区；
+    11. 表格排版：独立成段表格自动水平居中，列表与引用块内表格保持左对齐缩进，版面层次分明；
+    12. 其余样式：粗体、斜体、下划线、删除线、公式等均完全使用 Cadmium 原版，零冲突。
+    ================================================================  */
+
+/* ======== 1. 字体定义与全局基础排版 ======== */
+@font-face {
+    font-family: "HarmonyOS Sans SC";
+    font-style: normal;
+    font-weight: 400;
+    src: local("HarmonyOS Sans SC Regular"), local("HarmonyOS_Sans_SC_Regular"), local("HarmonyOS Sans SC");
+}
+@font-face {
+    font-family: "HarmonyOS Sans SC";
+    font-style: normal;
+    font-weight: 600;
+    src: local("HarmonyOS Sans SC Medium"), local("HarmonyOS_Sans_SC_Medium"), local("HarmonyOS Sans SC Bold"), local("HarmonyOS Sans SC");
+}
+@font-face {
+    font-family: "HarmonyOS Sans SC";
+    font-style: normal;
+    font-weight: 700;
+    src: local("HarmonyOS Sans SC Bold"), local("HarmonyOS_Sans_SC_Bold"), local("HarmonyOS Sans SC");
+}
+@font-face {
+    font-family: "Maple Mono NF CN";
+    font-style: normal;
+    font-weight: 400;
+    src: local("Maple Mono NF CN"), local("Maple Mono NF CN-Regular"), local("Maple Mono");
+}
+@font-face {
+    font-family: "Maple Mono NF CN";
+    font-style: normal;
+    font-weight: 700;
+    src: local("Maple Mono NF CN Bold"), local("Maple Mono NF CN-Bold"), local("Maple Mono Bold"), local("Maple Mono");
+}
+
+:root {
+    --font-sans-serif: "HarmonyOS Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    --font-monospace: "Maple Mono NF CN", "JetBrains Mono", "Menlo", "Consolas", monospace;
+    --text-link-color: #6f42c1 !important;
+    --link-color: #6f42c1 !important;
+    --blockquote-border-color: transparent !important;
+    --blockquoteBorderColor: transparent !important;
+}
+
+/* 全局正文字体与行距 (作用域精准锁定在编辑器核心容器，绝不干扰侧边栏与偏好设置等原生 UI) */
+body,
+.mu-editor {
+    font-family: var(--font-sans-serif) !important;
+}
+
+.mu-editor,
+.mu-container {
+    line-height: 1.8 !important;
+}
+
+.mu-editor p,
+.mu-paragraph,
+p {
+    line-height: 1.8 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0.75rem !important;
+    word-break: normal;
+    word-wrap: break-word;
+}
+
+/* 确保页面主体、左右侧空白区及滚动条保持标准默认箭头指针 */
+html,
+body,
+.mu-container,
+::-webkit-scrollbar,
+::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+    cursor: default !important;
+}
+
+/* 仅在可编辑的具体文本与代码区域显示为文本编辑光标 (I-Beam 竖杠，严格限制在编辑器内部) */
+h1, h2, h3, h4, h5, h6,
+p,
+li,
+blockquote,
+table td,
+table th,
+pre,
+pre code,
+code,
+.mu-content,
+.mu-paragraph-content,
+.mu-code-content {
+    cursor: text !important;
+}
+
+/* 保护可交互组件的光标为手型指针 */
+input[type="checkbox"],
+a,
+button,
+.mu-copy-header-link,
+.mu-code-copy,
+.mu-inline-format-toolbar,
+.mu-inline-format-toolbar *,
+.mu-format-picker,
+.mu-format-picker *,
+.mu-quick-insert,
+.mu-quick-insert *,
+.mu-table-picker,
+.mu-table-picker * {
+    cursor: pointer !important;
+}
+
+/* ======== 正文选中文本高亮 (图2效果：仅作用于非代码块正文，严禁影响代码块) ======== */
+:not(pre):not(.mu-code-block):not(.mu-code):not(code)::selection,
+p::selection,
+p *::selection,
+h1::selection,
+h1 *::selection,
+h2::selection,
+h2 *::selection,
+h3::selection,
+h3 *::selection,
+h4::selection,
+h4 *::selection,
+h5::selection,
+h5 *::selection,
+h6::selection,
+h6 *::selection,
+li::selection,
+li *::selection,
+blockquote::selection,
+blockquote *::selection,
+table::selection,
+table *::selection,
+code:not(pre code)::selection,
+.mu-selection:not(pre):not(.mu-code-block):not(.mu-code-block *),
+.mu-selection:not(pre):not(.mu-code-block):not(.mu-code-block *) * {
+    background: #0078d7 !important;
+    background-color: #0078d7 !important;
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+
+/* 保护 Muya 隐藏标记不被选中文本暴露 */
+.mu-hide::selection {
+    color: transparent !important;
+    background: transparent !important;
+}
+
+/* ======== 2. 标题样式 (Headings) ======== */
+/* MarkText Muya 编辑器中标题容器为 .mu-editor，标题元素为 <h1 class="mu-atx-heading"> 等。
+   此处同时使用 h1~h6 标签选择器与 .mu-editor 作用域选择器，确保完美覆盖并保持高优先级。 */
+h1, h2, h3, h4, h5, h6,
+.mu-editor h1, .mu-editor h2, .mu-editor h3,
+.mu-editor h4, .mu-editor h5, .mu-editor h6 {
+    position: relative !important;
+    margin-top: 1.25rem !important;
+    margin-bottom: 0.65rem !important;
+    font-weight: 700 !important;
+    box-sizing: border-box !important;
+}
+
+/* H1: 居中对齐、行高 1.4、无左侧竖线、专属底部留白 */
+h1, .mu-editor h1 {
+    text-align: center !important;
+    font-size: 1.75rem !important;
+    line-height: 1.4 !important;
+    font-weight: 700 !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 0 !important;
+    border-left: none !important;
+    border-bottom: none !important;
+}
+
+/* H2~H6: 左侧彩色装饰竖线 (5px 实线，12px 间距) */
+h2, h3, h4, h5, h6,
+.mu-editor h2, .mu-editor h3, .mu-editor h4,
+.mu-editor h5, .mu-editor h6 {
+    border-left-width: 5px !important;
+    border-left-style: solid !important;
+    padding-left: 12px !important;
+    border-radius: 0 !important;
+    border-bottom: none !important;
+}
+
+h2, .mu-editor h2 {
+    font-size: 1.625rem !important;
+    line-height: 1.4 !important;
+    border-left-color: #000000 !important;
+}
+
+h3, .mu-editor h3 {
+    font-size: 1.375rem !important;
+    line-height: 1.5 !important;
+    border-left-color: #1565c0 !important;
+}
+
+h4, .mu-editor h4 {
+    font-size: 1.1875rem !important;
+    line-height: 1.5 !important;
+    font-weight: 600 !important;
+    border-left-color: #007aff !important;
+}
+
+h5, .mu-editor h5 {
+    font-size: 1.0625rem !important;
+    line-height: 1.6 !important;
+    font-weight: 600 !important;
+    border-left-color: #6ec0ff !important;
+}
+
+h6, .mu-editor h6 {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+    font-weight: 600 !important;
+    border-left-color: #b3e5fc !important;
+}
+
+/* ======== 3. 行内代码与高亮标记样式 (Inline Code & Highlights) ======== */
+code:not(pre code) {
+    font-family: var(--font-monospace) !important;
+    font-size: 0.92rem !important;
+    color: #007aff !important;
+    background-color: #eef7ff !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 2px 6px !important;
+    margin: 0 3px !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+}
+
+/* 标题中的行内代码适配 (按标题字号等比例缩放，继承标题粗细与适宜基线，保持 TheBlue 浅蓝底色与核心蓝文字) */
+h1 code:not(pre code),
+h2 code:not(pre code),
+h3 code:not(pre code),
+h4 code:not(pre code),
+h5 code:not(pre code),
+h6 code:not(pre code) {
+    font-size: 0.85em !important;
+    font-weight: inherit !important;
+    padding: 0.12em 0.35em !important;
+    margin: 0 0.25em !important;
+    border-radius: 0.25em !important;
+    vertical-align: 0.04em !important;
+}
+
+/* 高亮标记 (<mark>) 柔和美化排版 (温润淡金荧光，圆角微边距) */
+/* 高亮标记 (<mark> 与 .mu-highlight) 柔和美化排版 (温润淡金荧光，圆角微边距) */
+mark,
+.mu-highlight {
+    background-color: #fff176 !important;
+    color: inherit !important;
+    border-radius: 3px !important;
+    padding: 1px 4px !important;
+    margin: 0 2px !important;
+}
+
+/* 高亮与行内代码混叠无缝融合 (方案 2A：消除两侧露黄毛刺，代码底色透明化融入高亮，文字加深为深蓝保证最高清晰度) */
+mark code:not(pre code),
+code:not(pre code) mark,
+.mu-highlight code:not(pre code),
+code:not(pre code) .mu-highlight,
+mark span.mu-inline-rule code,
+.mu-highlight span.mu-inline-rule code,
+mark .mu-code,
+.mu-highlight .mu-code {
+    background-color: transparent !important;
+    padding: 0 2px !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #0050b3 !important;
+}
+
+
+/* ======== 4. 超链接样式 (TheBlue 专属优雅紫罗兰色与平滑下划线，隔离外部 UI) ======== */
+.mu-editor a,
+a.mu-inline-rule,
+span.mu-inline-rule.mu-link,
+.mu-content a,
+.mu-content span.mu-link {
+    color: #6f42c1 !important;
+    font-weight: inherit !important;
+    padding: 0 2px !important;
+    text-decoration: underline !important;
+    cursor: pointer !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+}
+
+/* 超链接鼠标悬停动效 (切换为 TheBlue 核心亮蓝交互色) */
+.mu-editor a:hover,
+a.mu-inline-rule:hover,
+span.mu-inline-rule.mu-link:hover,
+.mu-content a:hover,
+.mu-content span.mu-link:hover {
+    color: #007aff !important;
+    text-decoration: underline !important;
+}
+
+/* 保护原生工具栏与链接编辑浮窗 (避免弹窗内部按钮被误着色) */
+.mu-inline-format-toolbar a,
+.mu-format-picker a,
+.mu-link-tools a,
+.mu-popover a,
+.mu-tooltip a {
+    color: inherit !important;
+    text-decoration: none !important;
+    padding: 0 !important;
+}
+
+
+/* ======== 5. 引用块样式 (TheBlue 专属优雅淡蓝背景与核心蓝边框，作用域隔离) ======== */
+.mu-editor blockquote,
+blockquote {
+    position: relative !important;
+    border-left: 4px solid #007aff !important;
+    background-color: rgba(0, 122, 255, 0.08) !important;
+    padding: 10px 16px !important;
+    margin: 0.75rem 0 !important;
+    border-radius: 0 6px 6px 0 !important;
+    box-sizing: border-box !important;
+    color: inherit !important;
+}
+
+/* 彻底屏蔽 MarkText/Muya 原生 Cadmium 主题绘制的绿线伪元素 (blockquote::before) */
+blockquote::before,
+blockquote::after,
+.mu-container blockquote::before,
+.mu-container blockquote::after {
+    display: none !important;
+    content: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+blockquote > p {
+    margin-top: 0 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+blockquote > p:last-child,
+blockquote > ul:last-child,
+blockquote > ol:last-child,
+blockquote > pre:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* 引用块内部行内代码对比度优化 (方案 1A：采用纯白微胶囊 + 极细浅蓝边框，彻底消除浅蓝背景重叠) */
+blockquote code:not(pre code) {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 122, 255, 0.22) !important;
+    box-shadow: 0 1px 2px rgba(0, 122, 255, 0.05) !important;
+}
+
+/* 引用块内部如果包含高亮代码，继续保持高亮透明融合规则 */
+blockquote mark code:not(pre code) {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ======== 6. 列表样式 (仅作用于文章正文列表，彻底隔离 UI 弹窗) ======== */
+/* 无序列表项目符号颜色 */
+[contenteditable="true"] ul:not([class*="toolbar"]):not([class*="menu"]) > li::marker,
+.markdown-body ul > li::marker {
+    color: #007aff !important;
+}
+
+/* 正文列表间距与行高 */
+[contenteditable="true"] ul:not([class*="toolbar"]):not([class*="menu"]),
+[contenteditable="true"] ol:not([class*="toolbar"]):not([class*="menu"]),
+.markdown-body ul,
+.markdown-body ol {
+    padding-left: 2rem !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+/* 嵌套子列表消除多余的下外边距与顶外边距，防止层级间隙过大 */
+[contenteditable="true"] li > ul,
+[contenteditable="true"] li > ol,
+.markdown-body li > ul,
+.markdown-body li > ol {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0 !important;
+}
+
+[contenteditable="true"] ul:not([class*="toolbar"]):not([class*="menu"]) > li,
+[contenteditable="true"] ol:not([class*="toolbar"]):not([class*="menu"]) > li,
+.markdown-body li {
+    line-height: 1.8 !important;
+    margin-top: 0.25rem !important;
+}
+
+/* ======== 6.2 任务列表样式 (彻底应用 Typora 样式：方形复选框、精准居中、删除线、淡化) ======== */
+
+/* 1. 复选框容器与定位对齐 */
+li.mu-task-list-item,
+.mu-task-list-item {
+    position: relative !important;
+    list-style-type: none !important;
+}
+
+li.mu-task-list-item::marker,
+.mu-task-list-item::marker {
+    content: none !important;
+    display: none !important;
+}
+
+/* 2. 复选框基座尺寸与定位 (严格设定 16px x 16px，使其与正文首行基线完美对齐) */
+li.mu-task-list-item > input[type='checkbox'],
+li.mu-task-list-item > span.mu-task-list-checkbox,
+.mu-task-list-item > input[type='checkbox'],
+.mu-task-list-item > span.mu-task-list-checkbox {
+    position: absolute !important;
+    top: calc(var(--mu-line-height, 1.8) * 0.5 * var(--mu-font-size, 16px) - 8px) !important;
+    left: -24px !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+    box-sizing: border-box !important;
+    z-index: 2 !important;
+}
+
+/* 3. 复选框未选中状态：精致方形 (圆角 3.5px)，浅蓝精致描边，纯白卡片底 */
+li.mu-task-list-item > input[type='checkbox']::before,
+li.mu-task-list-item > span.mu-task-list-checkbox::before,
+.mu-task-list-item > input[type='checkbox']::before,
+.mu-task-list-item > span.mu-task-list-checkbox::before,
+.markdown-body .task-list-item input[type='checkbox']::before {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 3.5px !important;
+    border: 1.5px solid #6ec0ff !important;
+    background-color: #ffffff !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: none !important;
+    content: '' !important;
+}
+
+/* 4. 复选框选中状态：填充 TheBlue 核心亮蓝 (#007aff) */
+li.mu-task-list-item > input.mu-checkbox-checked::before,
+li.mu-task-list-item > span.mu-checkbox-checked::before,
+li.mu-task-list-item > input[type='checkbox']:checked::before,
+.mu-task-list-item > input.mu-checkbox-checked::before,
+.mu-task-list-item > span.mu-checkbox-checked::before,
+.mu-task-list-item > input[type='checkbox']:checked::before,
+.markdown-body input[type='checkbox']:checked::before {
+    background: #007aff !important;
+    background-color: #007aff !important;
+    border-color: #007aff !important;
+    border-radius: 3.5px !important;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.25) !important;
+    opacity: 1 !important;
+}
+
+/* 5. 对勾 (Checkmark) 形状与居中对齐：
+      精准居中：利用 translate(-50%, -50%) 在 16px 容器正中心定位旋转，彻底消除原先偏向角落的偏差 */
+li.mu-task-list-item > input::after,
+li.mu-task-list-item > span.mu-task-list-checkbox::after,
+.mu-task-list-item > input::after,
+.mu-task-list-item > span.mu-task-list-checkbox::after {
+    position: absolute !important;
+    top: 44% !important;
+    left: 50% !important;
+    width: 4.5px !important;
+    height: 8.5px !important;
+    border: 1.8px solid #ffffff !important;
+    border-top: none !important;
+    border-left: none !important;
+    transform: translate(-50%, -50%) rotate(45deg) scale(0) !important;
+    transform-origin: center !important;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-sizing: border-box !important;
+    content: '' !important;
+}
+
+li.mu-task-list-item > input.mu-checkbox-checked::after,
+li.mu-task-list-item > span.mu-checkbox-checked::after,
+li.mu-task-list-item > input[type='checkbox']:checked::after,
+.mu-task-list-item > input.mu-checkbox-checked::after,
+.mu-task-list-item > span.mu-checkbox-checked::after,
+.mu-task-list-item > input[type='checkbox']:checked::after {
+    opacity: 1 !important;
+    transform: translate(-50%, -55%) rotate(45deg) scale(1) !important;
+    border-color: #ffffff !important;
+}
+
+/* 6. 任务完成删除线与变灰（彻底应用 Typora 规则）：
+      使用兄弟选择器 (~ *) 以及现代容器选择器 (:has) 双保险渗透 */
+li.mu-task-list-item > input.mu-checkbox-checked ~ *,
+li.mu-task-list-item > span.mu-checkbox-checked ~ *,
+li.mu-task-list-item > input:checked ~ *,
+li.mu-task-list-item:has(input.mu-checkbox-checked) > *:not(input):not(span.mu-task-list-checkbox),
+li.mu-task-list-item:has(span.mu-checkbox-checked) > *:not(input):not(span.mu-task-list-checkbox),
+li.mu-task-list-item:has(input:checked) > *:not(input):not(span.mu-task-list-checkbox),
+.markdown-body .task-list-item:has(input:checked) {
+    text-decoration: line-through !important;
+    text-decoration-color: #767676 !important;
+    color: #767676 !important;
+    opacity: 0.65 !important;
+}
+
+/* 任务列表已完成项内部常规子元素（粗体、斜体、代码等，排除 katex）继承删除线 */
+li.mu-task-list-item > input.mu-checkbox-checked ~ * :not(.katex):not(.katex *),
+li.mu-task-list-item > span.mu-checkbox-checked ~ * :not(.katex):not(.katex *),
+li.mu-task-list-item > input:checked ~ * :not(.katex):not(.katex *) {
+    text-decoration: line-through !important;
+    text-decoration-color: #767676 !important;
+}
+
+/* 保护复选框自身绝不继承删除线与半透明 */
+li.mu-task-list-item > input,
+li.mu-task-list-item > span.mu-task-list-checkbox,
+.mu-task-list-item > input,
+.mu-task-list-item > span.mu-task-list-checkbox {
+    text-decoration: none !important;
+    opacity: 1 !important;
+}
+
+/* ======== 数学公式删除线单线贯穿与防横向滚动条优化 ======== */
+
+/* 彻底禁用 KaTeX 内部所有微观节点的原生 text-decoration，消除分子分母上下标各自画线的碎裂现象 */
+.katex,
+.katex *,
+.mu-math-render,
+.mu-math-render * {
+    text-decoration: none !important;
+}
+
+/* 彻底消除公式容器因尺寸微差或伪元素溢出而触发的原生横向滚动条，恢复纯净排版与正常基线对齐 */
+.mu-math,
+.mu-math-render,
+.mu-math > .mu-math-render,
+.mu-inline-rule.mu-math,
+.mu-inline-rule.mu-math .katex,
+.katex,
+del .katex,
+s .katex,
+strike .katex,
+.mu-del .katex,
+li.mu-task-list-item:has(input:checked) .katex {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    scrollbar-width: none !important;
+}
+
+.mu-math > .mu-math-render::-webkit-scrollbar,
+.mu-math-render::-webkit-scrollbar,
+.mu-math::-webkit-scrollbar,
+.katex::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* 当公式处于被删除态时（无论是正文中的 ~~公式~~ 还是已勾选完成的任务列表）：
+   为公式外层容器提供单根横贯整个公式的居中水平删除线 */
+del .katex,
+s .katex,
+strike .katex,
+.mu-del .katex,
+li.mu-task-list-item > input.mu-checkbox-checked ~ * .katex,
+li.mu-task-list-item > span.mu-checkbox-checked ~ * .katex,
+li.mu-task-list-item > input:checked ~ * .katex,
+li.mu-task-list-item:has(input.mu-checkbox-checked) .katex,
+li.mu-task-list-item:has(input:checked) .katex,
+.markdown-body del .katex,
+.markdown-body s .katex,
+.markdown-body .task-list-item:has(input:checked) .katex {
+    position: relative !important;
+    display: inline-block !important;
+}
+
+del .katex::after,
+s .katex::after,
+strike .katex::after,
+.mu-del .katex::after,
+li.mu-task-list-item > input.mu-checkbox-checked ~ * .katex::after,
+li.mu-task-list-item > span.mu-checkbox-checked ~ * .katex::after,
+li.mu-task-list-item > input:checked ~ * .katex::after,
+li.mu-task-list-item:has(input.mu-checkbox-checked) .katex::after,
+li.mu-task-list-item:has(input:checked) .katex::after,
+.markdown-body del .katex::after,
+.markdown-body s .katex::after,
+.markdown-body .task-list-item:has(input:checked) .katex::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    top: 50% !important;
+    height: 1.5px !important;
+    background-color: #767676 !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
+    box-sizing: border-box !important;
+}
+
+
+/* ======== 7. 严格保护 MarkText 快捷编辑浮动工具栏 (完全恢复原版外观) ======== */
+.mu-inline-format-toolbar,
+.mu-inline-format-toolbar *,
+.mu-format-picker,
+.mu-format-picker *,
+.mu-tooltip,
+.mu-tooltip *,
+.mu-popover,
+.mu-popover * {
+    line-height: normal !important;
+}
+
+.mu-inline-format-toolbar ul,
+.mu-format-picker ul {
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+    display: flex !important;
+}
+
+.mu-inline-format-toolbar li,
+.mu-format-picker li {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: normal !important;
+    list-style: none !important;
+}
+
+/* ======== 8. 图片样式 (Images，作用域隔离) ======== */
+.mu-editor img,
+img {
+    display: block !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0.75rem auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1) !important;
+    background-color: transparent !important;
+}
+
+/* ======== 9. 独立代码框 (仅背景色、字体与高亮，框架保留原版) ======== */
+/* 代码框背景色 */
+pre {
+    background-color: #2b2b2b !important;
+    color: #A9B7C6 !important;
+}
+
+/* 代码字体 */
+pre code {
+    font-family: var(--font-monospace) !important;
+    color: #A9B7C6 !important;
+}
+
+/* 代码块选中文本高对比度优化：完全保持修复后的经典深蓝选区 (#264f78) + 纯白文字反白 */
+pre ::selection,
+pre code ::selection,
+pre *::selection,
+pre .token::selection,
+.mu-code-block ::selection,
+.mu-code-block code ::selection,
+.mu-code-block *::selection,
+.mu-code-block .token::selection,
+.mu-code-block .mu-selection,
+.mu-code-block .mu-selection * {
+    background-color: #264f78 !important;
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+
+/* 彻底清除所有代码 token 的背景色与文字阴影，清除 Prism 原生对 operator (=, +, -, ^, : 等) 附带的半透明浅色背景 */
+pre .token,
+pre code *,
+.mu-code-block .token,
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+    background: transparent !important;
+    background-color: transparent !important;
+    text-shadow: none !important;
+}
+
+/* 语法高亮配色 (经典 IntelliJ / Darcula 全语言深度适配) */
+/* 关键字、操作符、重要标记、规则、字面量 (true/false/null) */
+.token.keyword, .token.boolean, .token.operator, .token.important, .token.atrule, .token.rule,
+.hljs-keyword, .hljs-selector-tag, .hljs-literal {
+    color: #CC7832 !important;
+}
+
+/* 函数、方法、类名、类型声明 */
+.token.function, .token.class-name, .token.title,
+.hljs-title, .hljs-function, .hljs-type {
+    color: #FFD760 !important;
+}
+
+/* 字符串、字符、属性值、URL 资源 */
+.token.string, .token.char, .token.attr-value, .token.url,
+.hljs-string {
+    color: #6A8759 !important;
+}
+
+/* 数字、数值、单位、十六进制颜色 */
+.token.number, .token.unit, .token.hexcode, .token.color, .token.entity,
+.hljs-number {
+    color: #6897BB !important;
+}
+
+/* 注释、文档标记 */
+.token.comment, .token.prolog, .token.doctype, .token.cdata,
+.hljs-comment {
+    color: #787878 !important;
+    font-style: italic !important;
+}
+
+/* HTML 标签名、CSS 选择器 (核心修复：彻底解决 CSS 选择器无高亮问题) */
+.token.tag, .token.selector,
+.hljs-tag, .hljs-selector-tag {
+    color: #E8BF6A !important;
+}
+
+/* 属性名、CSS 属性、变量名、符号、常量 */
+.token.attr-name, .token.property, .token.variable, .token.symbol, .token.constant,
+.hljs-attr, .hljs-variable {
+    color: #9876AA !important;
+}
+
+/* 内置对象、原生类型 */
+.token.builtin,
+.hljs-built_in {
+    color: #FF9E59 !important;
+}
+
+/* 正则表达式、宏定义、元数据、注解装饰器 */
+.token.regex, .token.macro, .token.annotation, .token.decorator, .token.metadata,
+.hljs-meta {
+    color: #BBB529 !important;
+}
+
+/* 标点符号、大中小括号、分号冒号、命名空间 */
+.token.punctuation, .token.namespace {
+    color: #A9B7C6 !important;
+}
+
+/* Diff 新增行 / 成功状态 (经典 Darcula 绿色) */
+.token.inserted, .hljs-addition {
+    color: #629755 !important;
+}
+
+/* 语法错误标记、删除线标记、Diff 删除行 */
+.token.error, .token.deleted, .hljs-deletion {
+    color: #BC3F3C !important;
+}
+
+/* ======== 10. 表格排版 (独立成段居中，列表/引用块保持左对齐) ======== */
+/* 单独成段的表格：块级居中排版 */
+.mu-table-inner,
+table {
+    display: table !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+    border-collapse: collapse !important;
+    box-sizing: border-box !important;
+}
+
+/* 确保编辑器内表格 figure 容器自适应居中 */
+figure.mu-table {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+/* 嵌套在无序列表、有序列表、引用块中的表格：保持左对齐，不强制居中 */
+li figure.mu-table,
+blockquote figure.mu-table,
+li .mu-table-inner,
+blockquote .mu-table-inner,
+li table,
+blockquote table {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+li figure.mu-table,
+blockquote figure.mu-table {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+}

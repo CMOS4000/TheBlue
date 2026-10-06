@@ -1,0 +1,13 @@
+# Dependencies & build artifacts
+node_modules/
+dist/
+*.log
+
+# Scratch and temporary testing files
+scratch/
+*.tmp
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini

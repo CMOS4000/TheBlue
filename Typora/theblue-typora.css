@@ -1,0 +1,1092 @@
+/*  ================================ TheBlue ================================  */
+/*  ========================== Typora 主题（修订版） ==========================  */
+
+/*  ================================================================
+    原作者：Github@CMOS4000  知乎@太极
+    原仓库：https://github.com/CMOS4000/TheBlue
+    基线：TheBlue for Typora，已针对 Typora 1.14.10 / Electron 42.2.0 实测修订
+
+    ------------------------------------------------------------------
+    一、本修订版相对原版的实质性改动（每一处都有实测依据）
+    ------------------------------------------------------------------
+    1. 【标题竖线】由 Flex + ::before 改为 border-left。
+       原方案用 display:flex 承载 H2~H6，会把标题内的每个行内子元素
+       （code / strong / em / 行内公式 / 链接 / mark）强制块级化并各自成为一个
+       flex item，导致多层嵌套时标题被拆成独立的块与列。
+       border-left 由标题自身盒子绘制，天然跟随高度，完全不影响内部行内排版，
+       同时不再需要 .md-focus 伪元素抢救补丁与打印时的 span 回退补丁。
+
+    2. 【行内修饰配色】加粗、斜体、下划线统一为随正文色（黑），
+       删除线为"黑字 + 蓝色删除线"，线宽 1.5px。
+       依靠 text-decoration-color 把"线"的颜色与"字"的颜色解耦。
+
+    3. 【行内代码作用域】原 #write code（1,0,1 分）会盖过 .md-fences（0,1,0 分），
+       把深色代码块里 code 元素承载的文字染成白底用的主题蓝
+       （#007aff 在 #2b2b2b 上实测 3.52:1，而 .md-fences 原本的 #A9B7C6 是 6.93:1）。
+       现补 `#write pre code` / `#write .md-fences code` 显式重置，
+       颜色交回 CodeMirror 的 .cm-* 语法高亮。
+
+    4. 【标题内行内代码】新增等比缩放（0.85em）与基线校正，避免与标题字号脱节。
+
+    5. 【高亮 <mark>】由浅蓝改为温润淡金 #fff176，并新增"高亮 × 行内代码"混叠规则
+       （代码底透明化、文字加深），消除两侧露黄毛刺。
+
+    6. 【引用块内行内代码】改为纯白微胶囊，并修正选择器特异性
+       （详见文件末尾第 14 节）。
+
+    7. 【打印/PDF】标题沿用 border-left 方案并为 H1 补上 page-break-after:avoid；
+       YAML 元数据块不再被 display:none 隐藏（此前样式与隐藏规则自相矛盾）。
+
+    8. 【对比度修正】代码行号 2.76→4.34:1、语法错误标记 2.64→3.71:1、
+       次要文字 4.48→4.54:1（WCAG 2.1 实测值）。
+
+    9. 【任务复选框】尺寸与边框改用 rem，不随标题/代码块等上下文字号膨胀。
+
+    ------------------------------------------------------------------
+    二、已知取舍与未做之事（不是疏漏，是刻意保留）
+    ------------------------------------------------------------------
+    - 代码语法色阶仍沿用 IntelliJ Darcula 原值。因 #2b2b2b 比 Darcula 背景更亮，
+      注释 3.21:1、字符串 3.52:1、属性名 3.71:1、关键字 4.25:1 未达 4.5:1。
+      整体重调会改变代码块观感，故保留原样，如需达标请按背景重新推导色阶。
+    - 全主题未定义 :hover 状态（链接、表格等沿用 Typora 自带悬停效果）。
+    - 字体统一采用系统已安装的 HarmonyOS Sans SC 与 Maple Mono NF CN（通过 local() 命中），
+      不依赖任何外挂字体包，保持全平台（Typora / MarkFlowy / MarkText）规范一致。
+    - HarmonyOS 只声明到 600 字重，--font-weight-bold(700) 由浏览器合成加粗。
+
+    ------------------------------------------------------------------
+    三、变量命名规范
+    ------------------------------------------------------------------
+    --[scope]-[role]-[property]
+      scope:    作用域/结构 (theme, font, layout, spacing, border, code, ui, accent)
+      role:     语义/用途 (primary, h1, write, block, inline ...)
+      property: 属性名 (color, size, width, radius ...)
+    第 14 节集中了原先散落各处的字面颜色；第 15 节列出保留但不生效的变量。
+    ================================================================  */
+
+
+
+/* ======== 0. 全局变量定义 ======== */
+
+:root {
+    /* ------ 1. Font Stack - 字体栈 ------ */
+
+    --font-sans-serif: "HarmonyOS Sans SC", "Microsoft YaHei", "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+
+    --font-monospace: "Maple Mono NF CN", "JetBrains Mono", "Consolas", "Menlo", monospace;
+
+    /* ------ 2. Font Size - 字号（一律 rem：标题不随上下文字号嵌套放大） ------ */
+    --font-size-h1:                                    1.75rem;  /* 28px */
+    --font-size-h2:                                   1.625rem;  /* 26px */
+    --font-size-h3:                                   1.375rem;  /* 22px */
+    --font-size-h4:                                  1.1875rem;  /* 19px */
+    --font-size-h5:                                  1.0625rem;  /* 17px */
+    --font-size-h6:                                       1rem;  /* 16px */
+
+    --font-size-code:                                  0.95rem;  /* 代码块字号稍小 */
+    --font-size-inline-code:                           0.92rem;
+    --font-weight-bold:                                    700;  /* 注意：HarmonyOS 只声明到 600，700 由浏览器合成加粗 */
+    --font-weight-medium:                                  600;
+
+    /* ------ 3. Line Height - 行高 (统一使用无单位比例) ------ */
+    --font-line-height-base:                               1.8;  /* 正文行高 */
+    --font-line-height-h1:                                 1.4;  /* 标题行高较紧凑 */
+    --font-line-height-h2:                                 1.4;
+    --font-line-height-h3:                                 1.5;
+    --font-line-height-h4:                                 1.5;
+    --font-line-height-h5:                                 1.6;
+    --font-line-height-h6:                                 1.6;
+    --font-line-height-code:                               1.6;
+
+    /* ------ 4. Layout - 页面布局排版 ------ */
+    --layout-write-max-width:                           1200px;  /* 容器宽度固定 */
+    --layout-write-padding-top:                           2rem;  /* 随比例缩放的留白 */
+    --layout-write-padding-side:                          2rem;
+    --layout-write-padding-bottom:                        6rem;
+    --layout-list-indent:                                 2rem;  /* 列表缩进 */
+
+    /* ------ 5. Spacing - 间距 ------ */
+    --spacing-block-vertical:                          0.75rem;  /* 段落间距 */
+    --spacing-heading-top:                             1.25rem;  /* 标题上方间距 */
+    --spacing-heading-bottom:                          0.65rem;  /* 标题下方间距 */
+    --spacing-h1-padding-bottom:                        0.3rem;  /* H1标题专属下方间距 */
+    --spacing-heading-bar-right:                          12px;  /* 装饰线距离 */
+    --spacing-table-cell:                              6px 6px;  /* 表格单元格上下/左右间距 */
+    --spacing-hr-vertical:                                2rem;  /* 分割线垂直间距 */
+
+    /* ------ 6. Component - 组件规格 (统一使用 px) ------ */
+    --component-border-radius:                             8px;  /* 组件圆角半径 */
+    --component-heading-bar-width:                         5px;  /* 标题左侧竖条宽度 */
+    --component-quote-bar-width:                           4px;  /* 引用块左侧竖条宽度 */
+
+    /* ------ 7. Theme Colors - 主题颜色 ------ */
+    --theme-primary-color:                                #007aff;  /* 主题核心蓝 (主要交互色) */
+    --theme-dark-color:                                   #1565c0;  /* 强调色/深蓝 (H3 竖线；加粗已改为随正文色) */
+    --theme-light-color:                                  #6ec0ff;  /* 浅蓝色 (H5 竖线、任务复选框边框；下划线已改为随正文色) */
+    --theme-lightest-color:                               #eef7ff;  /* 最浅蓝色 (用于背景点缀) */
+    --theme-primary-shadow-color:          rgba(0, 122, 255, 0.2);  /* 主题色阴影颜色 */
+
+    /* ------ 8. Text Colors - 文本颜色 ------ */
+    --paper-background-color:                             #ffffff;  /* 页面背景底色 */
+    --text-primary-color:                                 #000000;  /* 主要文本颜色 */
+    --text-secondary-color:                               #767676;  /* 次要文本/描述性颜色 (白底 4.54:1，#777 只有 4.48 差一点) */
+    --text-inverse-color:                                 #ffffff;  /* 反白/深色背景上的文字颜色 */
+    --text-link-color:                                    #6f42c1;  /* 超链接文字颜色 */
+    --text-faded-color:                                   #909090;  /* 专注模式下的淡化文字颜色 */
+    --text-highlight-background-color:                    #fff176;  /* Mark 高亮背景色（温润淡金，与 theblue.editor.css 一致） */
+    --text-highlight-foreground-color:                    inherit;  /* Mark 高亮文字色（跟随正文，避免高亮内的粗体/链接被染成同一色） */
+    --text-selected-background-color:    var(--theme-primary-color);  /* 文本选中时的背景色 */
+    --text-selected-foreground-color:     var(--text-inverse-color);  /* 文本选中时的文字色 */
+
+    /* ------ 9. Border Colors - 边框装饰 ------ */
+    --border-primary-color:                               #e0e0e0;  /* 通用边框/分割线颜色 */
+    --border-bar-color:                    var(--theme-light-color);  /* HR 分割虚线颜色 */
+    --heading-h2-bar-color:                               #000000;  /* H2 装饰线颜色 */
+    --heading-h3-bar-color:                var(--theme-dark-color);  /* H3 装饰线颜色（跟随主题深蓝） */
+    --heading-h4-bar-color:             var(--theme-primary-color);  /* H4 装饰线颜色（跟随主题主色） */
+    --heading-h5-bar-color:               var(--theme-light-color);  /* H5 装饰线颜色（跟随主题浅蓝） */
+    --heading-h6-bar-color:                               #b3e5fc;  /* H6 装饰线颜色（浅蓝阶末尾，故不派生自主题色） */
+
+    /* ------ 10. Quote - 引用颜色 ------ */
+    --quote-background-color:             rgba(0, 122, 255, 0.08);  /* 引用块背景颜色 */
+    --quote-bar-color:                   var(--theme-primary-color);  /* 引用块左侧竖线颜色 */
+    --quote-bar-inactive-color:            rgba(85, 85, 85, 0.12);  /* 专注模式非活跃引用色 */
+
+    /* ------ 11. Table - 表格颜色 ------ */
+    --table-background-color:                             #fafafa;  /* 表格默认行背景 */
+    --table-heading-background-color:   var(--theme-lightest-color);  /* 表头背景颜色 */
+    --table-heading-border-color:       var(--border-primary-color);  /* 表头下方的加强线颜色 */
+    --table-striped-background-color:                     #f0f0f0;  /* 表格斑马纹色 */
+
+    /* ------ 12. Code Block - 代码块颜色 ------ */
+    --code-background-color:                              #2b2b2b;  /* 代码块背景色 */
+    --code-foreground-color:                              #A9B7C6;  /* 代码块默认文字颜色 */
+    --code-gutter-border-color:          rgba(120, 120, 120, 0.3);  /* 左侧行号区分线颜色 */
+    --code-linenumber-color:                              #8a8f93;  /* 行号文字颜色 (深底 4.34:1，原 #6b6e70 只有 2.76) */
+    --code-cursor-color:                                  #A9B7C6;  /* 代码编辑器光标颜色 */
+    --code-selected-background-color:                     #214283;  /* 代码块内选中区域背景色 */
+    --code-inline-background-color:     var(--theme-lightest-color);  /* 行内代码背景色 */
+    --code-inline-foreground-color:                        #0062cc;  /* 行内代码文字色（比主题蓝 #007aff 更深；浅蓝底 5.36:1 / 白胶囊 5.80:1，均达 WCAG AA） */
+    --code-search-background-color:          rgba(50, 89, 48, .7);  /* 代码块搜索命中背景色 */
+    --code-search-active-background-color:  rgba(61, 115, 59, .7);  /* 代码块当前搜索项背景色 */
+
+    /* 代码语法高亮 */
+    --code-syntax-keyword-color:                          #CC7832;  /* 关键字(if/else/let等) */
+    --code-syntax-definition-color:                       #FFD760;  /* 函数定义/类名 */
+    --code-syntax-string-color:                           #6A8759;  /* 字符串 */
+    --code-syntax-number-color:                           #6897BB;  /* 数字 */
+    --code-syntax-comment-color:                          #787878;  /* 注释颜色 */
+    --code-syntax-meta-color:                             #BBB529;  /* 宏定义/元数据 */
+    --code-syntax-variable-color:                         #A9B7C6;  /* 变量名 */
+    --code-syntax-variable2-color:                        #9876AA;  /* 变量名2/属性名 */
+    --code-syntax-type-color:                             #AABBCC;  /* 类型名 */
+    --code-syntax-tag-color:                              #E8BF6A;  /* HTML 标签名 */
+    --code-syntax-attribute-color:                        #9876AA;  /* HTML/CSS 属性 */
+    --code-syntax-error-color:                            #e05252;  /* 错误语法颜色（深底实测 3.71:1；Darcula 原值 #BC3F3C 在 #2b2b2b 上只有 2.64） */
+    --code-syntax-builtin-color:                          #FF9E59;  /* 内置对象/库函数 */
+    --code-syntax-bracket-background-color:               #3B514D;  /* 括号匹配背景色 */
+    --code-syntax-bracket-foreground-color:               #FFEF28;  /* 括号匹配文字色 */
+
+    /* ------ 13. UI - 界面组件颜色 ------ */
+    --ui-sidebar-background-color:                        #ffffff;  /* 侧边栏背景 */
+    --ui-tooltip-background-color:                        #333333;  /* 语言提示浮窗背景 */
+    --ui-tooltip-foreground-color:                        #eeeeee;  /* 语言提示浮窗文字 */
+    --ui-meta-background-color:                           #f7f7f7;  /* YAML 元数据块背景 */
+    --ui-panel-background-color:                          #fafafa;  /* 搜索/打开等面板背景 */
+    --ui-panel-border-color:                              #dddddd;  /* 面板边框颜色 */
+    --ui-panel-item-border-color:                         #e5e5e5;  /* 面板列表项边框 */
+    --ui-panel-item-border-highlight-color:               #fefefe;  /* 面板列表项高亮边 */
+    --ui-panel-item-border-light-color:                   #eeeeee;  /* 面板列表项左侧线 */
+    --ui-item-hover-background-color:                     #e6f0fe;  /* 菜单项悬停背景 */
+    --ui-item-active-background-color:var(--quote-background-color);  /* 侧边栏活跃文件项背景 */
+    --ui-shadow-color:                         rgba(0, 0, 0, 0.3);  /* 通用浮窗阴影颜色 */
+
+    /* ------ 14. Derived Accents - 派生强调色 ------
+       把原先散落在各规则里的字面颜色集中到这里。
+       改动这些值即可整体调整对应元素的观感，无需在规则里翻找。 */
+    --accent-highlight-foreground:                        #0050b3;  /* 高亮内的行内代码文字（叠在淡金底上加深刻画） */
+    --accent-inline-code-on-quote:                        #ffffff;  /* 引用块内行内代码胶囊底色（与 8% 浅蓝背景拉开反差） */
+    --accent-inline-code-border:          rgba(0, 122, 255, 0.22);  /* 引用块内行内代码胶囊边框 */
+    --accent-inline-code-shadow:          rgba(0, 122, 255, 0.05);  /* 引用块内行内代码胶囊投影 */
+    --accent-checkmark-color:                             #ffffff;  /* 任务复选框对勾描边色 */
+    --accent-image-shadow:                  rgba(0, 0, 0, 0.1);  /* 图片柔和投影 */
+    --accent-code-shadow:                   rgba(0, 0, 0, 0.15);  /* 代码块投影 */
+    --accent-code-border:                   rgba(0, 0, 0, 0.1);  /* 代码块极细边框 */
+
+    /* ------ 15. Resolved - 不直接引用但需说明的变量 ------
+       下面两个不会被 var() 读取，保留是为了记录设计意图，改动它们不会生效。 */
+    --text-highlight-foreground-color:                    inherit;  /* 高亮文字色：规则里用 color:inherit，让高亮内的粗体/链接保住各自颜色 */
+    --item-hover-bg-color:                var(--ui-item-hover-background-color);  /* 覆盖 Typora 自带同名变量，读取方是 Typora 自身样式 */
+}
+
+
+/* ======== 1. 字体引入 (Font Imports) ======== */
+
+@font-face {
+    font-family: "HarmonyOS Sans SC";
+    font-style: normal;
+    font-weight: 300;
+    src:
+        local("HarmonyOS Sans SC Light"),
+        local("HarmonyOS_Sans_SC_Light"),
+        local("HarmonyOS Sans SC");
+}
+
+@font-face {
+    font-family: "HarmonyOS Sans SC";
+    font-style: normal;
+    font-weight: 400;
+    src:
+        local("HarmonyOS Sans SC Regular"),
+        local("HarmonyOS_Sans_SC_Regular"),
+        local("HarmonyOS Sans SC");
+}
+
+@font-face {
+    font-family: "HarmonyOS Sans SC";
+    font-style: normal;
+    font-weight: 500;
+    src:
+        local("HarmonyOS Sans SC Medium"),
+        local("HarmonyOS_Sans_SC_Medium"),
+        local("HarmonyOS Sans SC");
+}
+
+@font-face {
+    font-family: "HarmonyOS Sans SC";
+    font-style: normal;
+    font-weight: 600;
+    src:
+        local("HarmonyOS Sans SC Bold"),
+        local("HarmonyOS_Sans_SC_Bold"),
+        local("HarmonyOS Sans SC Medium"),
+        local("HarmonyOS Sans SC");
+}
+
+@font-face {
+    font-family: "HarmonyOS Sans SC";
+    font-style: normal;
+    font-weight: 700;
+    src:
+        local("HarmonyOS Sans SC Bold"),
+        local("HarmonyOS_Sans_SC_Bold"),
+        local("HarmonyOS Sans SC");
+}
+
+@font-face {
+    font-family: "Maple Mono NF CN";
+    font-style: normal;
+    font-weight: 300;
+    src:
+        local("Maple Mono NF CN Light"),
+        local("Maple Mono NF CN-Light"),
+        local("Maple Mono Light"),
+        local("Maple Mono");
+}
+
+@font-face {
+    font-family: "Maple Mono NF CN";
+    font-style: normal;
+    font-weight: 400;
+    src:
+        local("Maple Mono NF CN"),
+        local("Maple Mono NF CN-Regular"),
+        local("Maple Mono");
+}
+
+@font-face {
+    font-family: "Maple Mono NF CN";
+    font-style: normal;
+    font-weight: 600;
+    src:
+        local("Maple Mono NF CN SemiBold"),
+        local("Maple Mono NF CN-SemiBold"),
+        local("Maple Mono SemiBold"),
+        local("Maple Mono");
+}
+
+@font-face {
+    font-family: "Maple Mono NF CN";
+    font-style: normal;
+    font-weight: 700;
+    src:
+        local("Maple Mono NF CN Bold"),
+        local("Maple Mono NF CN-Bold"),
+        local("Maple Mono Bold"),
+        local("Maple Mono");
+}
+
+@font-face {
+    font-family: "Maple Mono NF CN";
+    font-style: italic;
+    font-weight: 400;
+    src:
+        local("Maple Mono NF CN Italic"),
+        local("Maple Mono NF CN-Italic"),
+        local("Maple Mono Italic"),
+        local("Maple Mono");
+}
+
+@font-face {
+    font-family: "Maple Mono NF CN";
+    font-style: italic;
+    font-weight: 600;
+    src:
+        local("Maple Mono NF CN SemiBold Italic"),
+        local("Maple Mono NF CN-SemiBoldItalic"),
+        local("Maple Mono");
+}
+
+
+/* ======== 2. 基础排版 (Basic Typography) ======== */
+
+html {
+    font-size: 100%;
+}
+
+body {
+    font-family: var(--font-sans-serif) !important;
+    color: var(--text-primary-color);
+    background-color: var(--paper-background-color);
+    -webkit-font-smoothing: antialiased;
+    line-height: var(--font-line-height-base);
+    letter-spacing: 0;
+    margin: 0;
+    overflow-x: hidden; /* Typora 自带 base.css 即 hidden；改成 auto 时宽表格/宽图会冒出横向滚动条 */
+}
+
+#write {
+    max-width: var(--layout-write-max-width);
+    margin: 0 auto;
+    padding: var(--layout-write-padding-top) var(--layout-write-padding-side) var(--layout-write-padding-bottom);
+}
+
+#write p {
+    line-height: var(--font-line-height-base);
+    word-spacing: 0.05rem;
+}
+
+#write ol li {
+    padding-left: 0.5rem;
+}
+
+/* 超链接默认样式 */
+a {
+    color: var(--text-link-color);
+    font-weight: inherit;
+    padding: 0 2px;
+    text-decoration: underline;
+}
+
+
+/* ======== 3. 选中高亮 (Selection) ======== */
+
+::selection,
+#write ::selection,
+.md-focus-container ::selection,
+.md-block-meta ::selection {
+    background: var(--text-selected-background-color);
+    color: var(--text-selected-foreground-color) !important;
+}
+
+
+/* ======== 4. 标题样式 (Heading Styles) ======== */
+
+h1, h2, h3, h4, h5, h6 {
+    position: relative;
+    margin-top: var(--spacing-heading-top);
+    margin-bottom: var(--spacing-heading-bottom);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.4;
+    box-sizing: border-box;
+    cursor: text;
+}
+
+/* H1: 居中对齐，无左侧竖线装饰 */
+h1 {
+    text-align: center;
+    padding-left: 0;
+    font-size: var(--font-size-h1);
+    line-height: var(--font-line-height-h1);
+    font-weight: var(--font-weight-bold);
+    padding-bottom: var(--spacing-h1-padding-bottom);
+}
+
+/* H2-H6 竖线改用 border-left —— 标题保持正常行内流。
+   原 Flex + ::before 方案会把标题里每个行内子元素（code / strong / em / 公式 / 链接 / mark）
+   强制块级化，并让它们各自成为一个 flex item，于是在多层嵌套时被拆成独立的块与列。
+   border-left 由标题自身的盒子绘制，天然跟随高度，且完全不干扰内部行内排版。 */
+#write h2, #write h3, #write h4, #write h5, #write h6 {
+    display: block !important;
+    border-left-width: var(--component-heading-bar-width) !important;
+    border-left-style: solid !important;
+    padding-left: var(--spacing-heading-bar-right) !important;
+    padding-right: 0 !important;
+    border-radius: 0 !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    background: transparent !important; /* 消除背景包边 */
+    outline: none !important;           /* 消除聚焦框 */
+    box-shadow: none !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+}
+
+/* 装饰线颜色映射（由伪元素背景色改为元素自身左边框色） */
+#write h2 { border-left-color: var(--heading-h2-bar-color) !important; }
+#write h3 { border-left-color: var(--heading-h3-bar-color) !important; }
+#write h4 { border-left-color: var(--heading-h4-bar-color) !important; }
+#write h5 { border-left-color: var(--heading-h5-bar-color) !important; }
+#write h6 { border-left-color: var(--heading-h6-bar-color) !important; }
+
+/* 标题字体与字号设置 */
+h2 { font-size: var(--font-size-h2); line-height: var(--font-line-height-h2); font-weight: var(--font-weight-bold); }
+h3 { font-size: var(--font-size-h3); line-height: var(--font-line-height-h3); font-weight: var(--font-weight-bold); }
+h4 { font-size: var(--font-size-h4); line-height: var(--font-line-height-h4); font-weight: var(--font-weight-medium); }
+h5 { font-size: var(--font-size-h5); line-height: var(--font-line-height-h5); font-weight: var(--font-weight-medium); }
+h6 { font-size: var(--font-size-h6); line-height: var(--font-line-height-h6); font-weight: var(--font-weight-medium); }
+
+/* 焦点态无需特殊处理：竖线由 border-left 绘制，天然跟随标题盒子高度。
+   标题内的 span 不再需要任何 display 覆盖 —— 取消 Flex 后它们回归默认行内流；
+   Typora 自带的 .md-heading{white-space:pre-wrap} 负责保住标题的软换行。 */
+#write :is(h2, h3, h4, h5, h6):focus,
+#write :is(h2, h3, h4, h5, h6).md-focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+
+/* ======== 5. 区块与组件 (Blocks & Components) ======== */
+
+p, blockquote, ul, ol, dl, table {
+    margin: var(--spacing-block-vertical) 0;
+}
+
+/* 水平分割线 */
+hr {
+    height: 0;
+    padding: 0;
+    margin: var(--spacing-hr-vertical) 0;
+    background-color: transparent;
+    border: 0 none;
+    border-top: 2px dashed var(--border-bar-color);
+    overflow: hidden;
+    box-sizing: content-box;
+}
+
+.md-hr:focus {
+    outline: 2px solid var(--theme-primary-color);
+    outline-offset: 2px;
+}
+
+/* 引用块 */
+blockquote {
+    border-left: var(--component-quote-bar-width) solid var(--quote-bar-color);
+    padding: 10px 15px;
+    color: var(--text-primary-color);
+    background-color: var(--quote-background-color);
+}
+
+/* 引用块内的行内代码：纯白微胶囊 + 极细浅蓝边框，避免与 8% 浅蓝背景叠色。
+   特异性说明：通用行内代码规则 `#write :not(pre) > code` 也是 (1,0,2) 分，
+   且在样式表中更靠后，因此这里必须用 (1,1,2) 分的 `#write blockquote :not(pre) > code`
+   才能稳定胜出——少写这一条，白胶囊会被浅蓝底色盖掉。 */
+#write blockquote :not(pre) > code,
+#write blockquote > p code,
+#write blockquote li code,
+blockquote code,
+blockquote tt {
+    background-color: var(--accent-inline-code-on-quote) !important;
+    border: 1px solid var(--accent-inline-code-border) !important;
+    box-shadow: 0 1px 2px var(--accent-inline-code-shadow) !important;
+}
+blockquote mark code,
+blockquote code mark {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 文档首尾间距清理 */
+#write > ul:first-child, #write > ol:first-child { margin-top: 30px; }
+body > *:first-child { margin-top: 0 !important; }
+body > *:last-child { margin-bottom: 0 !important; }
+body > h2:first-child, body > h1:first-child, body > h1:first-child + h2 { margin-top: 0; padding-top: 0; }
+ul, ol {
+    padding-left: var(--layout-list-indent);
+    margin-top: 0.5rem;
+    margin-bottom: var(--spacing-block-vertical);
+}
+/* 嵌套子列表消除多余外边距，防止层级间隙过大 */
+li > ol, li > ul { margin-top: 0.25rem; margin-bottom: 0; }
+#write li { line-height: var(--font-line-height-base); }
+
+
+/* ======== 6. 表格样式 (Tables) ======== */
+
+table {
+    width: 100%;
+    margin: var(--spacing-block-vertical) 0;
+    border-collapse: collapse;
+    border: 2px solid var(--border-primary-color);
+}
+
+table th,
+table td {
+    padding: var(--spacing-table-cell);
+    text-align: left;
+    vertical-align: top;
+    border: 1px solid var(--border-primary-color);
+}
+
+table tr {
+    background-color: var(--table-background-color);
+}
+
+/* 表头样式 */
+table thead th {
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary-color);
+    background-color: var(--table-heading-background-color);
+    border-bottom: 2px solid var(--table-heading-border-color);
+}
+
+/* 斑马纹 (偶数行背景) */
+table tr:nth-child(even) {
+    background-color: var(--table-striped-background-color);
+}
+
+table tbody tr:last-child td {
+    border-bottom: 1px solid var(--border-primary-color);
+}
+
+/* 嵌套在列表项与引用块中的表格：保持左对齐缩进，不被强制居中 */
+#write li table,
+#write blockquote table {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+.ty-table-edit {
+    padding-top: 4px;
+}
+
+
+/* ======== 7. 行内修饰与列表 (Inline Elements & Lists) ======== */
+
+#write strong {
+    padding: 0 1px;
+    color: var(--text-primary-color);
+}
+
+#write em {
+    padding: 0 5px 0 2px;
+    color: var(--text-primary-color);
+}
+
+#write u {
+    border-bottom: 2px solid var(--text-primary-color);
+    text-decoration: none;
+}
+
+/* 删除线：文字回归黑色，删除线本身保持蓝色（#007aff，比原 #6ec0ff 更深）
+   并加粗到 1.5px（浏览器默认约 1px）。text-decoration-color 让"线"与"字"颜色解耦。 */
+#write del {
+    padding: 1px 2px;
+    color: var(--text-primary-color);
+    text-decoration-line: line-through;
+    text-decoration-color: var(--theme-primary-color);
+    text-decoration-thickness: 1.5px;
+    text-decoration-skip-ink: none;
+}
+
+/* 列表项目符号颜色 */
+ul .md-list-item::marker,
+ul ul .md-list-item::marker,
+ul ul ul .md-list-item::marker {
+    color: var(--theme-primary-color);
+}
+
+/* 文本高亮（对齐 theblue.editor.css 的温润淡金荧光，色值走变量以便配置） */
+#write mark {
+    background-color: var(--text-highlight-background-color);
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin: 0 2px;
+    color: inherit;
+    font-weight: inherit;
+}
+
+/* 高亮与行内代码混叠：代码底色透明化融入高亮，文字加深保证清晰度（消除两侧露黄毛刺） */
+#write mark code,
+#write code mark {
+    background: transparent !important;
+    background-color: transparent !important;
+    padding: 0 2px !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--accent-highlight-foreground) !important;
+}
+
+
+/* ======== 8. 任务列表 (Task Lists) ======== */
+
+/* 基础重置 */
+.md-task-list {
+    list-style-type: none !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
+
+.md-task-list-item {
+    position: relative;
+    list-style-type: none !important;
+    padding-left: 1.6em !important; 
+}
+
+.md-task-list-item::marker {
+    content: none !important;
+}
+
+/* 复选框容器 */
+.md-task-list-item > input {
+    appearance: none;
+    -webkit-appearance: none;
+    position: absolute;
+    left: 0; 
+    top: 0.35em; /* 用 em：需要跟随所在行的字号做首行基线对齐 */
+    
+    /* 尺寸用 rem：不随标题/代码块等上下文字号膨胀（与主题"修复复选框随缩放变化"的声明一致） */
+    width: 1.1rem !important;
+    height: 1.1rem !important;
+    margin: 0 !important;
+    cursor: pointer;
+    z-index: 2;
+    
+    /* 强制复选框始终不透明，避免被完成状态的透明度影响 */
+    opacity: 1 !important; 
+}
+
+/* 绘制自定义方框背景 */
+.md-task-list-item > input::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    border-radius: 0.2rem;
+    border: 0.1rem solid var(--theme-light-color);
+    background-color: var(--paper-background-color);
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+/* 选中状态：背景填充 */
+.md-task-list-item > input:checked::before {
+    background-color: var(--theme-primary-color) !important;
+    border-color: var(--theme-primary-color) !important;
+    opacity: 1 !important;
+}
+
+/* 绘制对勾 (Checkmark) */
+.md-task-list-item > input::after {
+    content: "";
+    position: absolute;
+    width: 0.3rem;
+    height: 0.55rem;
+    border: 0.12rem solid var(--accent-checkmark-color);
+    border-top: 0;
+    border-left: 0;
+    top: 42%; 
+    left: 50%;
+    
+    transform: translate(-50%, -50%) rotate(45deg) scale(0);
+    transform-origin: center;
+    opacity: 0;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 选中状态：显示对勾 */
+.md-task-list-item > input:checked::after {
+    opacity: 1;
+    transform: translate(-50%, -55%) rotate(45deg) scale(1);
+}
+
+/* 已完成任务样式 */
+.md-task-list-item.task-list-done {
+    text-decoration: line-through;
+    color: var(--text-secondary-color);
+}
+
+/* 仅降低文字透明度，保持复选框清晰 */
+.md-task-list-item.task-list-done > .md-focus-container,
+.md-task-list-item.task-list-done > span {
+    opacity: 0.6; 
+}
+
+/* 移除输入框的删除线继承 */
+.md-task-list-item.task-list-done > input {
+    text-decoration: none !important;
+}
+
+
+/* ======== 9. 界面杂项 (UI Misc) ======== */
+
+/* Mermaid 图表容器背景 */
+.md-diagram-panel {
+    background-color: var(--paper-background-color); 
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+    position: relative !important;
+}
+
+/* YAML Front Matter 元数据块 */
+#write pre.md-meta-block {
+    padding: 1rem;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: var(--ui-meta-background-color);
+    border: 0;
+    border-radius: 3px;
+    color: var(--text-secondary-color);
+    margin-top: 0 !important;
+}
+
+/* 图片样式：去白边与柔和阴影 */
+#write img {
+    display: block;
+    padding: 0 !important; /* 重置内边距 */
+    border: none !important;
+    outline: none !important;
+    
+    max-width: 100%;
+    height: auto;
+    margin: var(--spacing-block-vertical) auto !important;
+    background-color: transparent; 
+
+    /* 柔和阴影，移除扩散层防止边缘发虚 */
+    box-shadow: 0 0 10px var(--accent-image-shadow);
+
+    object-fit: contain;
+    border-radius: var(--component-border-radius);
+}
+
+.md-image > .md-meta {
+    border-radius: 3px;
+    font-family: var(--font-monospace);
+    padding: 2px 0 0 4px;
+    font-size: 0.9em;
+    color: inherit;
+}
+.md-tag { color: inherit; }
+.md-toc { margin-top: 20px; padding-bottom: 20px; }
+.sidebar-tabs { border-bottom: none; }
+
+/* 快速打开面板 (Quick Open) */
+#typora-quick-open {
+    border: 1px solid var(--ui-panel-border-color);
+    background-color: var(--ui-panel-background-color);
+}
+#typora-quick-open-item {
+    background-color: var(--ui-panel-background-color);
+    border-color: var(--ui-panel-item-border-highlight-color) var(--ui-panel-item-border-color) var(--ui-panel-item-border-color) var(--ui-panel-item-border-light-color);
+    border-style: solid;
+    border-width: 1px;
+}
+
+#md-notification:before { top: 10px; }
+.on-focus-mode blockquote { border-left-color: var(--quote-bar-inactive-color); }
+header, .context-menu, .megamenu-content, footer { font-family: var(--font-sans-serif); }
+
+.mac-seamless-mode #typora-sidebar { background-color: var(--ui-sidebar-background-color); }
+.md-lang { color: var(--code-foreground-color); }
+.html-for-mac .context-menu { --item-hover-bg-color: var(--ui-item-hover-background-color); }
+
+/* 输入框聚焦样式 */
+.ty-input:focus { border-color: var(--theme-primary-color) !important; }
+#md-searchpanel input:focus {
+    border-color: var(--theme-primary-color);
+    outline: none;
+    box-shadow: 0 0 6px 3px var(--theme-primary-shadow-color);
+}
+.info-panel-tab-border { background-color: var(--theme-light-color) !important; }
+.file-list-item.active { background-color: var(--ui-item-active-background-color) !important; }
+
+
+/* ======== 10. 代码块 (Code Blocks) ======== */
+
+/* 深色代码块容器 */
+.md-fences {
+    font-size: var(--font-size-code);
+    padding: 0.8rem !important;
+    border-radius: var(--component-border-radius);
+    overflow: visible !important;
+    background-color: var(--code-background-color) !important;
+    color: var(--code-foreground-color);
+    line-height: var(--font-line-height-code);
+    font-family: var(--font-monospace) !important;
+    margin: var(--spacing-block-vertical) auto !important;
+
+    /* 容器装饰：极细边框与柔和阴影 */
+    border: 1px solid var(--accent-code-border);
+    box-shadow: 0 0 12px var(--accent-code-shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 专注模式下的非活跃代码块淡化 */
+.on-focus-mode .CodeMirror.cm-s-inner:not(.CodeMirror-focused) *,
+.on-focus-mode .md-fences.md-focus .CodeMirror-code > :not(.CodeMirror-activeline) *,
+.on-focus-mode .md-htmlblock.md-focus .CodeMirror-code > :not(.CodeMirror-activeline) * {
+    color: var(--text-faded-color) !important
+}
+
+/* 行内代码
+   基础样式按 night 主题同构写法铺开；对代码块的泄漏由下方 .md-fences 专属规则用
+   !important + 更高特异性显式清回（night / github 内置主题也依赖同一套覆盖顺序）。 */
+#write code, tt {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-monospace);
+    font-size: var(--font-size-inline-code);
+    color: var(--code-inline-foreground-color);
+    background-color: var(--code-inline-background-color);
+    margin: 0 3px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* 代码块内的 code：撤掉行内胶囊的外观，颜色交回语法高亮（.cm-* 的 !important 规则） */
+#write pre code,
+#write .md-fences code {
+    background: transparent !important;
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+}
+
+/* 标题内的行内代码：按标题字号等比缩放，跟随标题字重与基线（原 Flex 方案下必然错位） */
+#write h1 code, #write h2 code, #write h3 code,
+#write h4 code, #write h5 code, #write h6 code {
+    font-size: 0.85em !important;
+    font-weight: inherit !important;
+    padding: 0.12em 0.35em !important;
+    margin: 0 0.25em !important;
+    border-radius: 0.25em !important;
+    vertical-align: 0.04em !important;
+}
+
+/* 脚注 */
+#write .md-footnote {
+    background-color: var(--theme-lightest-color);
+    color: var(--theme-primary-color);
+}
+
+/* 代码语言提示框 */
+.code-tooltip {
+    color: var(--ui-tooltip-foreground-color) !important;
+    background-color: var(--ui-tooltip-background-color) !important;
+    border-radius: 5px !important;
+    box-shadow: 0 2px 5px var(--ui-shadow-color) !important;
+}
+
+.code-tooltip input {
+    color: var(--ui-tooltip-foreground-color) !important;
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+}
+
+
+/* ======== 11. 语法高亮 (Syntax Highlighting) ======== */
+
+.cm-s-inner.CodeMirror {
+    background: none;
+    color: var(--code-foreground-color);
+}
+
+/* 语法元素颜色映射 */
+.cm-s-inner span.cm-keyword { color: var(--code-syntax-keyword-color); }
+.cm-s-inner span.cm-def { color: var(--code-syntax-definition-color); }
+.cm-s-inner span.cm-variable { color: var(--code-syntax-variable-color); }
+.cm-s-inner span.cm-variable-2 { color: var(--code-syntax-variable-color); }
+.cm-s-inner span.cm-variable-3 { color: var(--code-syntax-variable2-color); }
+.cm-s-inner span.cm-type { color: var(--code-syntax-type-color); }
+.cm-s-inner span.cm-property { color: var(--code-syntax-variable-color); }
+.cm-s-inner span.cm-operator { color: var(--code-foreground-color); }
+.cm-s-inner span.cm-string { color: var(--code-syntax-string-color); }
+.cm-s-inner span.cm-string-2 { color: var(--code-syntax-string-color); }
+.cm-s-inner span.cm-comment { color: var(--code-syntax-comment-color); }
+.cm-s-inner span.cm-number { color: var(--code-syntax-number-color); }
+.cm-s-inner span.cm-meta { color: var(--code-syntax-meta-color); }
+.cm-s-inner span.cm-link { color: var(--code-syntax-keyword-color); }
+.cm-s-inner span.cm-atom { color: var(--code-syntax-keyword-color); }
+.cm-s-inner span.cm-error { color: var(--code-syntax-error-color); }
+.cm-s-inner span.cm-tag { color: var(--code-syntax-tag-color); }
+.cm-s-inner span.cm-quote { color: var(--code-syntax-string-color); }
+.cm-s-inner span.cm-attribute { color: var(--code-syntax-attribute-color); }
+.cm-s-inner span.cm-qualifier { color: var(--code-syntax-string-color); }
+.cm-s-inner span.cm-bracket { color: var(--code-syntax-tag-color); }
+.cm-s-inner span.cm-builtin { color: var(--code-syntax-builtin-color); }
+.cm-s-inner span.cm-special { color: var(--code-syntax-builtin-color); }
+
+/* 搜索结果高亮 */
+.cm-s-inner span.cm-matchhighlight {
+    color: var(--text-inverse-color);
+    background-color: var(--code-search-background-color);
+    font-weight: normal;
+}
+.cm-s-inner span.cm-searching {
+    color: var(--text-inverse-color);
+    background-color: var(--code-search-active-background-color);
+    font-weight: normal;
+}
+
+/* 行号栏与光标 */
+.cm-s-inner .CodeMirror-gutters {
+    border-right: 1px solid var(--code-gutter-border-color);
+    background: var(--code-background-color);
+}
+.cm-s-inner .CodeMirror-linenumber {
+    color: var(--code-linenumber-color);
+}
+.cm-s-inner div.CodeMirror-cursor {
+    border-left: 1px solid var(--code-cursor-color);
+}
+
+/* 括号匹配高亮 */
+.cm-s-inner .CodeMirror-matchingbracket {
+    background-color: var(--code-syntax-bracket-background-color);
+    color: var(--code-syntax-bracket-foreground-color) !important;
+}
+
+/* 文本选中状态 */
+.cm-s-inner .CodeMirror-selected,
+.cm-s-inner .CodeMirror-selectedtext,
+.cm-s-typora-default .CodeMirror-selectedtext,
+.cm-overlay.CodeMirror-selectedtext {
+    background: var(--code-selected-background-color) !important;
+}
+.cm-s-inner .CodeMirror-selectedtext,
+.cm-s-typora-default .CodeMirror-selectedtext,
+.cm-overlay.CodeMirror-selectedtext {
+    color: var(--text-inverse-color) !important;
+}
+.cm-s-inner .cm-header, .cm-s-inner.cm-header {
+    color: var(--code-syntax-definition-color);
+    font-weight: normal;
+}
+
+
+/* ======== 12. 行间公式美化 (Math Blocks) ======== */
+
+.mathjax-block {
+    /* 间距与样式：与代码块保持统一 */
+    margin: var(--spacing-block-vertical) auto !important;
+    padding: 1rem;
+    border: 1px solid var(--border-primary-color) !important;
+    border-radius: var(--component-border-radius) !important;
+}
+
+/* 修正公式工具栏位置，避免被圆角遮挡 */
+.mathjax-block > .code-tooltip {
+    bottom: 0.5rem;
+    right: 0.5rem;
+}
+
+
+/* ======== 13. 媒体输出 (Media Print) ======== */
+
+@media print {
+    html { font-size: 16px; }
+
+    /* 标题：屏幕已用 border-left 画竖线，打印沿用同一方案。
+       顺带补上 H1 的孤行保护（原来只覆盖了 h2~h6，H1 会孤在页尾）。 */
+    #write h1, #write h2, #write h3, #write h4, #write h5, #write h6 {
+        display: block !important;
+        position: relative !important;
+        margin-top: 1.5rem !important;
+        margin-bottom: 1rem !important;
+        page-break-after: avoid;
+    }
+
+    #write h1 {
+        border-left: none !important;
+        padding-left: 0 !important;
+    }
+
+    /* 竖线随标题盒子绘制；跨页时用 box-decoration-break 保持边框连续 */
+    #write h2, #write h3, #write h4, #write h5, #write h6 {
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+    }
+
+    #write h2 { border-left-color: var(--heading-h2-bar-color) !important; }
+    #write h3 { border-left-color: var(--heading-h3-bar-color) !important; }
+    #write h4 { border-left-color: var(--heading-h4-bar-color) !important; }
+    #write h5 { border-left-color: var(--heading-h5-bar-color) !important; }
+    #write h6 { border-left-color: var(--heading-h6-bar-color) !important; }
+
+    /* 代码块打印优化 */
+    .md-fences,
+    .md-fences .CodeMirror-scroll {
+        transform: none !important;
+        filter: none !important;
+    }
+
+    .md-fences {
+        border-radius: var(--component-border-radius) !important; 
+        box-shadow: 
+            0 0 0 1px var(--code-background-color), /* 填缝防止白边 */
+            0 0 10px var(--accent-image-shadow) !important;
+        
+        -webkit-box-decoration-break: slice !important;
+        box-decoration-break: slice !important;
+        
+        border: none !important;
+        background-clip: border-box !important;
+        background-color: var(--code-background-color) !important;
+    }
+
+    /* 修复行号栏跨页出现的缝隙 */
+    .md-fences .CodeMirror-gutters {
+        border-right: 1px solid var(--code-background-color) !important;
+        background-color: var(--code-background-color) !important;
+    }
+
+    #write .md-image img {
+        box-shadow: none !important;
+        border: 1px solid var(--border-primary-color);
+        transform: none !important;
+    }
+    
+    /* 隐藏打印不需要的 UI 元素。
+       注意：这里**不再**包含 .md-meta-block —— 第 9 节专门为 YAML 元数据块设了样式，
+       若在此隐藏，那些样式在导出 PDF 时永远看不到，属于自相矛盾。 */
+    .md-continue-help, .code-tooltip {
+        display: none !important;
+    }
+    
+    table, pre, blockquote {
+        page-break-inside: avoid;
+    }
+}
+
+/* ======== 14. 选择器特异性备忘 (Specificity Notes) ========
+   本主题依赖 !important 覆盖 Typora 的自带样式与动态内联样式。
+   在 `#write` 作用域内下同一种属性时，务必确认四条 ID 级规则的先后关系：
+
+     #write code                     (1,0,1)  行内代码基础样式，位置靠后
+     #write :not(pre) > code         (1,0,2)  同上，仅 `>` 直系子级
+     #write blockquote ... code      (1,1,2)  引用块白胶囊，必须高于上一条
+     #write pre code / .md-fences code (1,0,2) 代码块内重置，用 !important 清回行内胶囊
+
+   改动顺序或在两处写同一条时，最容易出现"某处颜色突然失效"。
