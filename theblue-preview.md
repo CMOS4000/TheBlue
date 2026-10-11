@@ -339,7 +339,6 @@ $$
     * **粗体中的 `code`**：**请重点关注 `options.enableHighDpi` 选项**
     * *斜体中的链接*：*[访问 TheBlue 迁移指南文档](https://github.com/CMOS4000/TheBlue)*
     * ~~删除线中的代码与链接~~：~~废弃的旧方法 `oldEngine.bootstrap()`，参见 [旧版说明](https://github.com)~~
-    * ~~直接对数学公式施加删除线~~：~~$E = mc^2$~~ 与 ~~$\Delta S = \int \frac{\delta Q}{T}$~~（单根水平线居中贯穿）
     * <u>下划线中的加粗代码</u>：<u>**`critical_security_patch()`**</u>
 
 ---
